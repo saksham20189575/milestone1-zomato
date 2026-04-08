@@ -1,14 +1,53 @@
 /**
- * Calls the FastAPI Phase 4 backend (see repo config.yaml + restaurant_rec.phase4.app).
+ * Backend integration:
+ * - **FastAPI** (local or hosted): set `NEXT_PUBLIC_API_BASE` → JSON `/api/v1/*`.
+ * - **Streamlit only** (e.g. Vercel prod): leave `NEXT_PUBLIC_API_BASE` unset in production
+ *   and set `NEXT_PUBLIC_STREAMLIT_APP_URL` → marketing shell links to the live app.
  */
 
+export function streamlitAppUrl(): string | null {
+  const raw = process.env.NEXT_PUBLIC_STREAMLIT_APP_URL;
+  if (raw != null && String(raw).trim() !== "") {
+    return String(raw).trim().replace(/\/$/, "");
+  }
+  return null;
+}
+
+/**
+ * JSON API base, or `null` in production when unset (Streamlit-only deploy).
+ * In development, defaults to `http://127.0.0.1:8000` when unset.
+ */
+export function resolvedApiBase(): string | null {
+  const raw = process.env.NEXT_PUBLIC_API_BASE;
+  if (raw != null && String(raw).trim() !== "") {
+    return String(raw).trim().replace(/\/$/, "");
+  }
+  if (process.env.NODE_ENV !== "production") {
+    return "http://127.0.0.1:8000";
+  }
+  return null;
+}
+
+/** Vercel + Streamlit backend: no JSON API configured, but Streamlit URL is set. */
+export function preferStreamlitShell(): boolean {
+  return streamlitAppUrl() !== null && resolvedApiBase() === null;
+}
+
+/** Base URL for `fetch`; throws if missing (should not run in Streamlit shell mode). */
 export function apiBase(): string {
-  const b = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ?? "http://127.0.0.1:8000";
+  const b = resolvedApiBase();
+  if (!b) {
+    throw new Error("NEXT_PUBLIC_API_BASE is not set; use Streamlit shell mode or configure the API URL.");
+  }
   return b;
 }
 
 export async function fetchLocalities(): Promise<string[]> {
-  const res = await fetch(`${apiBase()}/api/v1/localities`, {
+  const base = resolvedApiBase();
+  if (!base) {
+    return [];
+  }
+  const res = await fetch(`${base}/api/v1/localities`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
   });
@@ -54,7 +93,11 @@ export type RecommendResponse = {
 };
 
 export async function postRecommend(body: RecommendBody): Promise<RecommendResponse> {
-  const res = await fetch(`${apiBase()}/api/v1/recommend`, {
+  const base = resolvedApiBase();
+  if (!base) {
+    throw new Error("API base URL is not configured.");
+  }
+  const res = await fetch(`${base}/api/v1/recommend`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(body),

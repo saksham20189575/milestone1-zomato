@@ -1,6 +1,9 @@
 # Zomato-style Next.js frontend
 
-Next.js 14 (App Router) + Tailwind UI inspired by `../design/Screenshot 2026-04-05 at 14.53.58.png`. It talks to the milestone **FastAPI** backend (`restaurant_rec.phase4.app`).
+Next.js 14 (App Router) + Tailwind UI inspired by `../design/Screenshot 2026-04-05 at 14.53.58.png`.
+
+- **Local:** calls the **FastAPI** backend (`restaurant_rec.phase4.app`) via `NEXT_PUBLIC_API_BASE`.
+- **Vercel (Streamlit backend):** leave `NEXT_PUBLIC_API_BASE` **unset** in production and set **`NEXT_PUBLIC_STREAMLIT_APP_URL`** to your Streamlit URL. The site becomes a marketing shell with a button that opens the live Streamlit app (Streamlit does not expose `/api/v1/*`).
 
 ## Setup
 
@@ -19,6 +22,14 @@ Open [http://localhost:3000](http://localhost:3000). Start the API from the repo
 ```bash
 uvicorn restaurant_rec.phase4.app:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+## Deploy on Vercel
+
+1. New project → import the Git repo → set **Root Directory** to **`web-next`**.
+2. **Environment variables (production):**
+   - **`NEXT_PUBLIC_STREAMLIT_APP_URL`** = `https://milestone1-zomato-o.streamlit.app` (no trailing slash).
+   - **Do not** set `NEXT_PUBLIC_API_BASE` unless you also host FastAPI somewhere; leaving it unset enables Streamlit shell mode.
+3. Deploy. Preview builds use the same env; for local `npm run dev`, keep `.env.local` with `NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000` for the full form.
 
 ## Hero image
 

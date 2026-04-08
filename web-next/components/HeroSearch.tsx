@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchLocalities, postRecommend, type RecommendItem, type RecommendResponse } from "@/lib/api";
+import {
+  fetchLocalities,
+  postRecommend,
+  preferStreamlitShell,
+  resolvedApiBase,
+  streamlitAppUrl,
+  type RecommendItem,
+  type RecommendResponse,
+} from "@/lib/api";
 import { RestaurantCard } from "@/components/RestaurantCard";
 
 const CHIPS = ["Italian", "Spicy", "Dessert", "Near Me"] as const;
@@ -19,7 +27,26 @@ function buildExtras(cravings: string, aiQuery: string, chips: Set<string>): str
   return s || undefined;
 }
 
+function HeroBackdrop() {
+  return (
+    <div className="absolute inset-0">
+      <Image
+        src="/hero-reference.png"
+        alt=""
+        fill
+        className="object-cover object-center"
+        priority
+        sizes="100vw"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-neutral-900/90" />
+    </div>
+  );
+}
+
 export function HeroSearch() {
+  const streamlitUrl = streamlitAppUrl();
+  const streamlitShell = preferStreamlitShell();
+
   const [localities, setLocalities] = useState<string[]>([]);
   const [locality, setLocality] = useState("");
   const [cuisine, setCuisine] = useState("");
@@ -35,6 +62,11 @@ export function HeroSearch() {
   const [result, setResult] = useState<RecommendResponse | null>(null);
 
   useEffect(() => {
+    if (streamlitShell) {
+      setLocalities([]);
+      setLoadError(null);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -52,24 +84,24 @@ export function HeroSearch() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [streamlitShell]);
 
-  const toggleChip = useCallback((label: string) => {
-    setChips((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-    if (label === "Italian" && !cuisine.toLowerCase().includes("italian")) {
-      setCuisine((c) => (c.trim() ? `${c}, Italian` : "Italian"));
-    }
-  }, [cuisine]);
-
-  const extras = useMemo(
-    () => buildExtras(cravings, aiQuery, chips),
-    [cravings, aiQuery, chips],
+  const toggleChip = useCallback(
+    (label: string) => {
+      setChips((prev) => {
+        const next = new Set(prev);
+        if (next.has(label)) next.delete(label);
+        else next.add(label);
+        return next;
+      });
+      if (label === "Italian" && !cuisine.toLowerCase().includes("italian")) {
+        setCuisine((c) => (c.trim() ? `${c}, Italian` : "Italian"));
+      }
+    },
+    [cuisine],
   );
+
+  const extras = useMemo(() => buildExtras(cravings, aiQuery, chips), [cravings, aiQuery, chips]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,20 +132,65 @@ export function HeroSearch() {
     }
   }
 
+  const apiHint = resolvedApiBase() ?? "(not set in production)";
+
+  if (streamlitShell && streamlitUrl) {
+    return (
+      <>
+        <section className="relative min-h-[520px] overflow-hidden">
+          <HeroBackdrop />
+          <div className="relative mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
+            <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-2xl md:p-8">
+              <h1 className="text-center text-2xl font-bold text-neutral-900 md:text-3xl">
+                Find Your Perfect Meal with Zomato AI
+              </h1>
+              <p className="mt-4 text-center text-sm text-neutral-600 md:text-base">
+                Live recommendations run on our Streamlit app — set your locality, budget, and cravings there and get
+                AI-ranked picks with explanations.
+              </p>
+              <a
+                href={streamlitUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 flex w-full items-center justify-center rounded-xl bg-zomato py-3.5 text-center text-base font-semibold text-white shadow-lg transition hover:bg-zomato-dark"
+              >
+                Open recommendation app →
+              </a>
+              <p className="mt-4 text-center text-xs text-neutral-500">
+                Opens in a new tab ·{" "}
+                <span className="break-all" title={streamlitUrl}>
+                  {streamlitUrl}
+                </span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-neutral-200 bg-neutral-50 py-12">
+          <div className="mx-auto max-w-6xl px-4 md:px-6">
+            <h2 className="text-xl font-bold text-neutral-900 md:text-2xl">Personalized Picks for You</h2>
+            <p className="mt-4 max-w-2xl text-sm text-neutral-600">
+              This site is the marketing shell. Your ranked restaurants and AI reasons appear in the Streamlit app after
+              you submit the form there.
+            </p>
+            <a
+              href={streamlitUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex rounded-xl border border-zomato bg-white px-5 py-2.5 text-sm font-semibold text-zomato transition hover:bg-zomato-muted"
+            >
+              Go to Streamlit app
+            </a>
+          </div>
+        </section>
+      </>
+    );
+  }
+
   return (
     <>
       <section className="relative min-h-[520px] overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/hero-reference.png"
-            alt=""
-            fill
-            className="object-cover object-center"
-            priority
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-neutral-900/90" />
-        </div>
+        <HeroBackdrop />
 
         <div className="relative mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
           <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-2xl md:p-8">
@@ -162,7 +239,7 @@ export function HeroSearch() {
 
               {loadError && (
                 <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                  Localities: {loadError} — is the API running at {process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000"}?
+                  Localities: {loadError} — is the API running at {apiHint}?
                 </p>
               )}
 

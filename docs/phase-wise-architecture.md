@@ -390,13 +390,13 @@ The system is split across two managed hosts: the **Python application and recom
 
 - **Project:** Point Vercel at **`web-next/`** (or the monorepo with root directory set to `web-next`).
 - **Build:** Default Next.js settings (`npm run build`); Node version per Vercel defaults or `engines` in `package.json` if you need a specific major.
-- **Environment:** Set **`NEXT_PUBLIC_API_BASE`** to the **FastAPI base URL** (e.g. `https://api.example.com` without a trailing slash)—the JSON API from §4.2, not the Streamlit page URL.
-- **CORS:** FastAPI (or whichever serves `/api/v1/*`) must allow the Vercel origin—see §4.4.
+- **Streamlit-only backend:** In production, **omit** **`NEXT_PUBLIC_API_BASE`** and set **`NEXT_PUBLIC_STREAMLIT_APP_URL`** to the Streamlit app (e.g. `https://…streamlit.app`). The Next.js home page then links out to Streamlit; it does not call `/api/v1/*` on that host.
+- **Hosted FastAPI:** Set **`NEXT_PUBLIC_API_BASE`** to the JSON API base (no trailing slash)—see §4.2. CORS on FastAPI must allow the Vercel origin—§4.4.
 
 ### End-to-end
 
 1. Deploy Streamlit (`streamlit_app.py`), secrets, and catalog; smoke-test recommendations in the browser.
-2. If using **web-next/**: deploy FastAPI (or equivalent) where CORS allows Vercel; set **`NEXT_PUBLIC_API_BASE`** to that API base URL; smoke-test localities + recommend from the live Vercel URL.
+2. Deploy **web-next/** on Vercel with **`NEXT_PUBLIC_STREAMLIT_APP_URL`** set and **`NEXT_PUBLIC_API_BASE`** unset → confirm the marketing shell opens Streamlit in a new tab. Optionally add FastAPI elsewhere later and set **`NEXT_PUBLIC_API_BASE`** for the full in-page form + results.
 
 ---
 
@@ -413,4 +413,4 @@ The system is split across two managed hosts: the **Python application and recom
 
 ---
 
-*Document version: 1.11 — Catalog bootstrap: auto-ingest to temp when Parquet missing (Streamlit Cloud).*
+*Document version: 1.12 — Vercel: `NEXT_PUBLIC_STREAMLIT_APP_URL` shell vs `NEXT_PUBLIC_API_BASE` for FastAPI.*
