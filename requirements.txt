@@ -1,0 +1,2 @@
+# Streamlit Community Cloud: pip install -r requirements.txt
+-e ".[streamlit]"

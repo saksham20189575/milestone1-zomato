@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Restaurant recommendations</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Restaurant recommendations</h1>
+      <p class="tagline">Zomato-style picks from your catalog + Groq</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel" aria-labelledby="form-heading">
+        <h2 id="form-heading">Your preferences</h2>
+        <p id="localities-hint" class="hint hidden">Loading localities from catalog…</p>
+        <form id="prefs-form" novalidate>
+          <label class="field">
+            <span>Locality</span>
+            <select name="location" id="locality-select" required disabled>
+              <option value="">Select a locality</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Max budget (₹ for two)</span>
+            <input
+              type="number"
+              name="budget_max_inr"
+              min="100"
+              max="100000"
+              step="50"
+              value="1000"
+              required
+            />
+            <small>Only places with listed cost ≤ this amount are considered.</small>
+          </label>
+          <label class="field">
+            <span>Cuisine <small>(optional)</small></span>
+            <input type="text" name="cuisine" placeholder="e.g. Chinese, North Indian" />
+          </label>
+          <label class="field">
+            <span>Minimum rating</span>
+            <input type="number" name="min_rating" min="0" max="5" step="0.1" value="3.5" required />
+          </label>
+          <label class="field checkbox">
+            <input type="checkbox" name="enable_rating_relax" checked />
+            <span>Allow slightly lower rating if very few matches</span>
+          </label>
+          <label class="field">
+            <span>Extra preferences <small>(optional)</small></span>
+            <textarea name="extras" rows="3" placeholder="e.g. family-friendly, outdoor seating"></textarea>
+          </label>
+          <button type="submit" class="btn primary" id="submit-btn" disabled>Get recommendations</button>
+        </form>
+      </section>
+
+      <section class="panel results-panel" aria-live="polite" aria-busy="false" id="results-section">
+        <h2>Results</h2>
+        <div id="status" class="status hidden" role="status"></div>
+        <div id="summary" class="summary hidden"></div>
+        <div id="meta" class="meta hidden"></div>
+        <ul id="cards" class="cards"></ul>
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+# Phase 1 — catalog ingestion (see docs/phase-wise-architecture.md)
+
+dataset:
+  id: ManikaSaini/zomato-restaurant-recommendation
+  split: train
+
+paths:
+  raw_snapshot: data/raw/zomato_hf_snapshot.parquet
+  processed_catalog: data/processed/restaurants.parquet
+  ingest_report: data/processed/ingest_report.json
+
+# Rating: source strings like "4.1/5"; values outside [min_rating, max_rating] after parse are invalid.
+rating:
+  min_valid: 0.0
+  max_valid: 5.0
+
+# INR cost for two — budget tiers (inclusive lower bound, exclusive upper for medium)
+budget_tiers_inr:
+  low_max: 500      # cost < this -> low
+  high_min: 1200    # cost >= this -> high; else medium
+
+# City aliases after title-casing token (e.g. new delhi -> Delhi)
+city_aliases:
+  bengaluru: Bangalore
+  bangalore: Bangalore
+  gurugram: Gurgaon
+  gurgaon: Gurgaon
+  noida: Noida
+  new delhi: Delhi
+  delhi: Delhi
+  mumbai: Mumbai
+  pune: Pune
+  hyderabad: Hyderabad
+  chennai: Chennai
+  kolkata: Kolkata
+  ahmedabad: Ahmedabad
+  jaipur: Jaipur
+  goa: Goa
+
+# Phase 2 — shortlist (see docs/phase-wise-architecture.md)
+filter:
+  rating_relax_delta: 0.5
+  min_candidates_for_relax: 5
+  max_shortlist_candidates: 40   # rows sent to Groq after filter (fixed; not API field)
+
+# Phase 3 — Groq (API key: GROQ_API_KEY in .env)
+groq:
+  model: llama-3.3-70b-versatile
+  temperature: 0.2
+  max_tokens: 2048
+  top_k_recommendations: 5
+  request_timeout_seconds: 60
+  prompt_version: v1
