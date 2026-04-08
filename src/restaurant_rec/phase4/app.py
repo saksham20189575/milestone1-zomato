@@ -34,14 +34,14 @@ def project_root() -> Path:
 @asynccontextmanager
 async def default_lifespan(app: FastAPI):
     from restaurant_rec.config import AppConfig
-    from restaurant_rec.phase2.catalog_loader import load_catalog
+    from restaurant_rec.phase2.catalog_bootstrap import ensure_catalog_dataframe
     from restaurant_rec.phase3.env_util import load_project_dotenv
 
     root = project_root()
     cfg_path = root / "config.yaml"
     load_project_dotenv(cfg_path)
     cfg = AppConfig.load(cfg_path)
-    catalog = load_catalog(cfg.paths.processed_catalog)
+    catalog = ensure_catalog_dataframe(cfg)
     app.state.config = cfg
     app.state.catalog = catalog
     app.state.config_path = cfg_path

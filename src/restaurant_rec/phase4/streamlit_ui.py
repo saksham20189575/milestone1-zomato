@@ -10,7 +10,7 @@ import streamlit as st
 from pydantic import ValidationError
 
 from restaurant_rec.config import AppConfig
-from restaurant_rec.phase2.catalog_loader import load_catalog
+from restaurant_rec.phase2.catalog_bootstrap import ensure_catalog_dataframe
 from restaurant_rec.phase2.localities import distinct_localities
 from restaurant_rec.phase2.preferences import UserPreferences
 from restaurant_rec.phase3.env_util import load_project_dotenv
@@ -19,13 +19,13 @@ from restaurant_rec.phase4.schemas import result_to_response
 from restaurant_rec.phase4.streamlit_secrets import hydrate_groq_key_from_streamlit_secrets
 
 
-@st.cache_resource(show_spinner="Loading catalog…")
+@st.cache_resource(show_spinner="Loading catalog (first run may download from Hugging Face)…")
 def _load_cfg_and_catalog(cfg_path_str: str) -> tuple[AppConfig, pd.DataFrame]:
     cfg_path = Path(cfg_path_str)
     load_project_dotenv(cfg_path)
     hydrate_groq_key_from_streamlit_secrets()
     cfg = AppConfig.load(cfg_path)
-    catalog = load_catalog(cfg.paths.processed_catalog)
+    catalog = ensure_catalog_dataframe(cfg)
     return cfg, catalog
 
 
@@ -41,11 +41,11 @@ def run_app(repo_root: Path) -> None:
     try:
         cfg, catalog = _load_cfg_and_catalog(str(cfg_path))
     except FileNotFoundError as e:
-        st.error("Catalog file not found (expected from `config.yaml` → `paths.processed_catalog`).")
+        st.error("Catalog could not be loaded or built.")
         st.caption(str(e))
         st.info(
-            "Generate **`data/processed/restaurants.parquet`** locally (e.g. ingest script), "
-            "then commit it or attach it for Streamlit Cloud if your repo excludes `data/processed/*`."
+            "Ensure network access to Hugging Face (dataset in `config.yaml`), or place "
+            "**`data/processed/restaurants.parquet`** next to `config.yaml`."
         )
         st.stop()
     except Exception as e:

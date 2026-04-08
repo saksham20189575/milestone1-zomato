@@ -382,7 +382,7 @@ The system is split across two managed hosts: the **Python application and recom
 - **Repo entrypoint:** Root **`streamlit_app.py`** → **`restaurant_rec.phase4.streamlit_ui`**, which loads `config.yaml`, the Parquet catalog, and runs the same **`recommend()`** path as FastAPI.
 - **Dependencies:** Root **`requirements.txt`** installs **`-e ".[streamlit]"`** (see **`pyproject.toml`** optional extra `streamlit`). Local dev: `pip install -e ".[streamlit]"` then `streamlit run streamlit_app.py`.
 - **Secrets:** In Streamlit Cloud → **Secrets**, set **`GROQ_API_KEY`**. Locally, `.streamlit/secrets.toml` is gitignored; `.env` still works via `load_project_dotenv`.
-- **Data:** `config.yaml` → **`paths.processed_catalog`** (default `data/processed/restaurants.parquet`). That file is gitignored by default—**ship or attach the Parquet** for Cloud (or relax ignore for a committed slice) so the app can start.
+- **Data:** `config.yaml` → **`paths.processed_catalog`**. If that file is missing and the repo tree is **read-only** (Streamlit Cloud), **`ensure_catalog_dataframe`** runs Phase 1 ingest once and writes Parquet under the container temp dir (needs **outbound network** to Hugging Face). Locally, if `data/processed/` is writable, ingest fills the configured path instead.
 - **Stability:** Pin Python 3.11+ on Cloud; keep `requirements.txt` aligned with `pyproject.toml`.
 - **Note:** Streamlit is a **hosted UI + Python backend**, not a substitute for **`POST /api/v1/recommend`**. The **Vercel** Next.js app still needs **`NEXT_PUBLIC_API_BASE`** pointing at a **FastAPI** (or other) JSON host unless you change the frontend to stop calling REST.
 
@@ -413,4 +413,4 @@ The system is split across two managed hosts: the **Python application and recom
 
 ---
 
-*Document version: 1.10 — Streamlit deploy: `streamlit_app.py`, `requirements.txt`, `streamlit_ui`; Deployment notes for API vs Streamlit URL.*
+*Document version: 1.11 — Catalog bootstrap: auto-ingest to temp when Parquet missing (Streamlit Cloud).*

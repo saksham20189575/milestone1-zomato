@@ -18,8 +18,8 @@ def load_hf_dataframe(cfg: AppConfig) -> pd.DataFrame:
     return hf_to_dataframe(rows)
 
 
-def run_ingest(config_path: Path | str) -> dict[str, Any]:
-    cfg = AppConfig.load(config_path)
+def run_ingest_with_config(cfg: AppConfig) -> dict[str, Any]:
+    """Download HF dataset, transform, validate, write Parquet + report using paths on `cfg`."""
     cfg.paths.raw_snapshot.parent.mkdir(parents=True, exist_ok=True)
     cfg.paths.processed_catalog.parent.mkdir(parents=True, exist_ok=True)
 
@@ -66,3 +66,8 @@ def run_ingest(config_path: Path | str) -> dict[str, Any]:
     cfg.paths.ingest_report.write_text(json.dumps(report, indent=2), encoding="utf-8")
     report["ingest_report_path"] = str(cfg.paths.ingest_report)
     return report
+
+
+def run_ingest(config_path: Path | str) -> dict[str, Any]:
+    cfg = AppConfig.load(config_path)
+    return run_ingest_with_config(cfg)
